@@ -1,0 +1,24 @@
+{
+  "name": "tenposfoodplace-astro",
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@fontsource-variable/noto-sans-jp": "^5.1.1",
+    "@fontsource-variable/noto-serif-jp": "^5.1.2",
+    "@fontsource/roboto": "^5.1.1",
+    "astro": "^5.1.10",
+    "gsap": "^3.12.7",
+    "microcms-js-sdk": "^3.2.0",
+    "swiper": "^11.2.4"
+  },
+  "devDependencies": {
+    "@types/node": "^24.1.0",
+    "sass": "^1.83.4"
+  }
+}

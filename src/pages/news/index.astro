@@ -1,0 +1,395 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import { getAllNews } from "../../lib/microcms";
+
+// ページネーション用のパラメータ
+const page = parseInt(Astro.url.searchParams.get("page") || "1");
+const limit = 20;
+const offset = (page - 1) * limit;
+
+// お知らせデータを取得
+const { contents: newsList, totalCount } = await getAllNews(limit, offset);
+const totalPages = Math.ceil(totalCount / limit);
+---
+
+<Layout
+    title="新着情報一覧 ｜テンポスフードプレイス"
+    description=""
+    pageUrl="/news/"
+    ogimage=""
+>
+    <article id="mainarea">
+        <div class="tp-border sans">
+            <nav class="tp-nav">
+                <ol class="tp-nav__list flex">
+                    <li><a href="/">トップページ</a></li>
+                    <li><a href="/news/">新着情報</a></li>
+                </ol>
+            </nav>
+
+            <!-- mv画像・カテゴリ名部分ここから -->
+            <section class="btm-front__section news">
+                <h1 class="btm-front__ttl font_m_plus">
+                    <span>新着情報</span>
+                </h1>
+            </section>
+            <!-- mv画像・カテゴリ名部分ここまで -->
+
+            <section class="kg-open__section btm-sec tp-wrapper">
+                <p class="kg-news__caption">新着情報一覧</p>
+
+                <!-- 情報一覧追加　ここから -->
+                <div class="top-news__container">
+                    <ul class="top-news__list_2">
+                        {
+                            newsList.length > 0 ? (
+                                newsList.map((news) => (
+                                    <li>
+                                        <a href={`./${news.id}/`}>
+                                            <span class="Date">
+                                                <time
+                                                    itemprop="datePublished"
+                                                    datetime={
+                                                        new Date(
+                                                            news.publishedAt,
+                                                        )
+                                                            .toISOString()
+                                                            .split("T")[0]
+                                                    }
+                                                >
+                                                    {new Date(news.publishedAt)
+                                                        .toLocaleDateString(
+                                                            "ja-JP",
+                                                            {
+                                                                year: "numeric",
+                                                                month: "2-digit",
+                                                                day: "2-digit",
+                                                            },
+                                                        )
+                                                        .replace(/\//g, ".")}
+                                                </time>
+                                            </span>
+                                            <span class="Caption">
+                                                {news.title}
+                                            </span>
+                                        </a>
+                                    </li>
+                                ))
+                            ) : (
+                                <li>
+                                    <span class="Caption">
+                                        お知らせはありません
+                                    </span>
+                                </li>
+                            )
+                        }
+                    </ul>
+                </div>
+
+                <!-- ページネーション -->
+                {
+                    totalPages > 1 && (
+                        <div class="pagination">
+                            <ul class="pagination__list">
+                                {page > 1 && (
+                                    <li class="pagination__item">
+                                        <a
+                                            href={`?page=${page - 1}`}
+                                            class="pagination__link"
+                                        >
+                                            前へ
+                                        </a>
+                                    </li>
+                                )}
+
+                                {Array.from(
+                                    { length: totalPages },
+                                    (_, i) => i + 1,
+                                ).map((pageNum) => (
+                                    <li class="pagination__item">
+                                        <a
+                                            href={`?page=${pageNum}`}
+                                            class={`pagination__link ${pageNum === page ? "pagination__link--active" : ""}`}
+                                        >
+                                            {pageNum}
+                                        </a>
+                                    </li>
+                                ))}
+
+                                {page < totalPages && (
+                                    <li class="pagination__item">
+                                        <a
+                                            href={`?page=${page + 1}`}
+                                            class="pagination__link"
+                                        >
+                                            次へ
+                                        </a>
+                                    </li>
+                                )}
+                            </ul>
+                        </div>
+                    )
+                }
+                <!-- 情報一覧追加　ここまで -->
+            </section>
+        </div>
+    </article>
+</Layout>
+
+<style lang="scss">
+    .pagination {
+        margin-top: 2rem;
+        text-align: center;
+    }
+
+    .pagination__list {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0.5rem;
+        list-style: none;
+        padding: 0;
+    }
+
+    .pagination__link {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        border: 1px solid var(--MAIN_BLACK);
+        text-decoration: none;
+        color: var(--MAIN_BLACK);
+        transition: all 0.3s ease;
+
+        &:hover {
+            background-color: var(--MAIN_BLACK);
+            color: var(--MAIN_WHITE);
+        }
+
+        &--active {
+            background-color: var(--MAIN_BLACK);
+            color: var(--MAIN_WHITE);
+        }
+    }
+
+    .kg-news__caption {
+        --border_color: var(--MAIN_BLACK);
+        color: var(--MAIN_ORANGE);
+        text-align: center;
+        font-size: 26px;
+        margin-top: -10px;
+    }
+
+    /* 文字周りの余白 */
+    .top-news__list_2 > li > a {
+        padding: 2em 0.5em 2em 2em;
+        display: block;
+        position: relative;
+    }
+
+    /* ニュース項目前のicon表示とアニメ pc用 */
+    .top-news__list_2 > li > a:before {
+        position: absolute;
+        content: "";
+        width: var(--icon_circle_size);
+        aspect-ratio: 1/1;
+        transition: 0.4s;
+        background: url(/asset/images/news/icon_next_slider.svg) no-repeat
+            center center / contain;
+        top: 40%;
+        transform: translateY(-50%);
+        left: 5%;
+        transform: translateX(-2em);
+    }
+
+    /* リンクの無効化 */
+    a.disabled {
+        pointer-events: none;
+    }
+
+    /* 横並び pc用　ここから */
+    ul.news__List_3 {
+        display: flex;
+    }
+
+    ul.news__List_3 > li.Date {
+        width: 100px;
+    }
+
+    ul.news__List_3 > li.Caption {
+        width: auto;
+    }
+
+    .top-news__list_2 > li:not(:last-child) {
+        border-bottom: 1px solid var(--MAIN_BLACK);
+    }
+
+    @media screen and (min-width: 768px) {
+        .top-news__container {
+            padding: 40px;
+        }
+
+        .top-news__list_2 .Date {
+            margin: 0 1em 0 0;
+        }
+
+        .top-news__list_2 > li > a:hover {
+            color: var(--MAIN_ORANGE);
+        }
+
+        .top-news__list_2 > li > a:hover:before {
+            background: url(/asset/images/news/icon_next_active.svg) no-repeat
+                center center / contain;
+            left: calc(5% + 5px);
+        }
+    }
+
+    @media screen and (max-width: 767px) {
+        .top-news__container {
+            padding: 0 30px;
+            margin-bottom: 10px;
+        }
+
+        .top-news__list_2 span {
+            display: block;
+        }
+
+        /* 見出し部分 */
+        .kg-news__caption {
+            /* text-align: center; */
+            font-size: 20px;
+            max-width: 400px;
+            margin-inline: auto;
+            margin-bottom: 5px;
+        }
+
+        /* ニュース項目前の i co n 表示 sp用 */
+        .top-news__list_2 > li > a:before {
+            transform: translateX(-1em);
+        }
+
+        /* 横並び解除 sp用　ここから */
+        ul.news__List_3 {
+            display: block;
+        }
+
+        ul.news__List_3 > li.Date {
+            width: auto;
+        }
+
+        /* 横並び sp用　ここまで */
+    }
+
+    .btm-front__section.news-detail {
+        background-image: url(/asset/images/news/mv_news-detail.jpg);
+        background-position: 45% 5%;
+    }
+
+    .news-detail__subttl {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-bottom: 40px;
+        width: 100%;
+        padding-bottom: 20px;
+        border-bottom: 1px solid #ccc;
+    }
+    .news-detail__center {
+        text-align: center;
+    }
+
+    @media screen and (max-width: 767px) {
+        .news-detail__subttl {
+            font-size: 1.3rem;
+            line-height: 1.3;
+        }
+    }
+
+    /* 本文 */
+    .news-detail__article dt {
+        font-weight: bold;
+        font-size: 1.2rem;
+        margin-top: 50px;
+        margin-bottom: 15px;
+    }
+    .news-detail__article dt h3 {
+        font-weight: bold;
+        font-size: 1.2rem;
+        margin-top: 50px;
+        margin-bottom: 15px;
+    }
+    @media screen and (max-width: 767px) {
+        .news-detail__article dt {
+            /* font-size: 1.2rem; */
+            line-height: 1.3;
+        }
+    }
+
+    ul.mbt_30 li {
+        margin-bottom: 30px;
+    }
+
+    .mbt_50 {
+        margin-bottom: 50px;
+    }
+
+    /* ----- リンク部分 調整中ここから ----- */
+    .news-detail-link {
+        position: relative;
+        padding-right: 25px;
+        /* display: flex; */
+        font-weight: bold;
+        /* ↓ .btm-linkと異なる設定 */
+        width: fit-content;
+        display: inline-flex;
+        color: var(--MAIN_ORANGE);
+        text-decoration: underline;
+        font-weight: normal;
+        /* word-break: normal; */
+        flex-wrap: wrap;
+    }
+
+    .news-detail-link:after {
+        position: absolute;
+        content: "";
+        aspect-ratio: 1/1;
+        width: 1.2em;
+        top: 50%;
+        transform: translateY(-50%);
+        right: 0;
+
+        backgr0ound: url(/asset/images/common/icon_next.svg) no-repeat center
+            center / contain;
+        transition: 0.8s;
+    }
+
+    a:hover .news-detail-link:after,
+    a.news-detail-link:hover:after {
+        right: -5px;
+        background: url(/asset/images/common/icon_next_active.svg) no-repeat
+            center center / contain;
+    }
+
+    /* ----- リンク部分 調整中ここまで ----- */
+    /* ----- 20250218 add ----- */
+    body.__wave span.txt_r {
+        display: block;
+        text-align: right;
+        margin-top: 15px;
+        line-height: 1.2;
+    }
+    body.__wave dl.news-detail__article span.txt_r {
+        margin-top: 30px;
+    }
+
+    body.__wave h2 {
+        margin-top: 50px;
+        text-align: cent er;
+    }
+
+    body.__wave h2.no_border {
+        border-bottom: 0px;
+        transform: translateY(20px);
+    }
+
+    dd.letter_01 {
+        letter-spacing: -0.5px;
+    }
+</style>

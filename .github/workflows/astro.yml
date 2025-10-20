@@ -1,0 +1,62 @@
+name: Deploy Astro site to Xserver
+
+on:
+  # メインブランチへのプッシュ時に実行
+  push:
+    branches: ["main"]
+
+  # microCMSのWebhookからのリクエスト時に実行
+  repository_dispatch:
+    types: [microcms]
+
+  # 手動実行を許可
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy to Xserver
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Build Project
+        run: npm run build
+        env:
+          MICROCMS_SERVICE_DOMAIN: ${{ secrets.MICROCMS_SERVICE_DOMAIN }}
+          MICROCMS_API_KEY: ${{ secrets.MICROCMS_API_KEY }}
+          
+      - name: Deploy to Xserver via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          server-dir: ${{ secrets.FTP_SERVER_DIR }}
+          local-dir: ./dist/
+          safe-mode: true
+          log-level: verbose
+          log-ftp: true
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            **/.vscode/**
+            **/.github/**
+            **/README.md
+            **/package.json
+            **/package-lock.json
+            **/astro.config.mjs
+            **/tsconfig.json
+            **/src/**
+            **/.env*
