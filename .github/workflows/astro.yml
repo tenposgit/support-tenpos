@@ -1,9 +1,9 @@
 name: Deploy Astro site to Xserver
 
 on:
-  # メインブランチへのプッシュ時に実行
+  # mainブランチとdevelopブランチへのプッシュ時に実行
   push:
-    branches: ["main"]
+    branches: ["main", "develop"]
 
   # microCMSのWebhookからのリクエスト時に実行
   repository_dispatch:
@@ -36,13 +36,42 @@ jobs:
           MICROCMS_SERVICE_DOMAIN: ${{ secrets.MICROCMS_SERVICE_DOMAIN }}
           MICROCMS_API_KEY: ${{ secrets.MICROCMS_API_KEY }}
           
-      - name: Deploy to Xserver via FTP
+      # mainブランチの場合は本番環境にデプロイ
+      - name: Deploy to Production (main branch)
+        if: github.ref == 'refs/heads/main'
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          server-dir: ${{ secrets.FTP_SERVER_DIR }}
+          server: ${{ secrets.FTP_SERVER_PROD }}
+          username: ${{ secrets.FTP_USERNAME_PROD }}
+          password: ${{ secrets.FTP_PASSWORD_PROD }}
+          server-dir: ${{ secrets.FTP_SERVER_DIR_PROD }}
+          local-dir: ./dist/
+          safe-mode: true
+          log-level: verbose
+          log-ftp: true
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            **/.vscode/**
+            **/.github/**
+            **/README.md
+            **/package.json
+            **/package-lock.json
+            **/astro.config.mjs
+            **/tsconfig.json
+            **/src/**
+            **/.env*
+
+      # developブランチの場合は開発環境にデプロイ
+      - name: Deploy to Development (develop branch)
+        if: github.ref == 'refs/heads/develop'
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        with:
+          server: ${{ secrets.FTP_SERVER_DEV }}
+          username: ${{ secrets.FTP_USERNAME_DEV }}
+          password: ${{ secrets.FTP_PASSWORD_DEV }}
+          server-dir: ${{ secrets.FTP_SERVER_DIR_DEV }}
           local-dir: ./dist/
           safe-mode: true
           log-level: verbose
